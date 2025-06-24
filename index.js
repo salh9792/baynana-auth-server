@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,7 +11,6 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize Firebase Admin SDK
-// You'll need to add your Firebase service account key
 const serviceAccount = {
   "type": "service_account",
   "project_id": "kjjrjjfn",
@@ -23,12 +21,16 @@ const serviceAccount = {
   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
   "token_uri": "https://oauth2.googleapis.com/token",
   "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL
+  "client_x509_cert_url": process.env.FIREBASE_CLIENT_CERT_URL,
+  "universe_domain": "googleapis.com"
 };
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// Initialize Firebase only if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
 
 const db = admin.firestore();
 
@@ -183,10 +185,11 @@ app.post('/checkUsername', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Baynana Auth Server running on port ${PORT}`);
-});
+// Start server (for local development)
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Baynana Auth Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
-
